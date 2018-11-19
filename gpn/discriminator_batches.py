@@ -5,6 +5,8 @@ Author: Nikolay Lysenko
 """
 
 
+from typing import Tuple
+
 import numpy as np
 
 
@@ -35,7 +37,7 @@ def sample_square_part(
         image_arr: np.ndarray, internal_size: int, padding_size: int
 ) -> np.ndarray:
     """
-    Sample a square part of an image.
+    Sample a square fragment of an image.
 
     :param image_arr:
         array of shape (channel_dim, x_dim, y_dim)
@@ -57,3 +59,24 @@ def sample_square_part(
     y_max = y_corner + internal_size + 2 * padding_size
     part = padded_image_arr[:, x_min:x_max, y_min:y_max]
     return part
+
+
+def split_into_center_and_frame(
+        part: np.ndarray, padding_size: int
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Split part of an original image into its center and a frame around it.
+
+    :param part:
+        sampled fragment of an image of shape (channel_dim, x_dim, y_dim)
+    :param padding_size:
+        size of a frame
+    :return:
+        a tuple of a central piece with zero padding
+        and a frame with zeros at center,
+        both having the same size as `part`
+    """
+    center = part[:, padding_size:-padding_size, padding_size:-padding_size]
+    center = pad_image(center, padding_size)
+    frame = part - center
+    return center, frame

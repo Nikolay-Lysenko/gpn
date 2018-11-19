@@ -100,5 +100,46 @@ def test_sample_square_part(
 ) -> None:
     """Test `sample_square_part` function."""
     output = batches.sample_square_part(image_arr, internal_size, padding_size)
-    print(output)
     assert any([np.array_equal(output, arr) for arr in possible_outputs])
+
+
+@pytest.mark.parametrize(
+    "part, padding_size, expected_center, expected_frame",
+    [
+        (
+            np.array([
+                [[0, 1, 0],
+                 [1, 0.5, 1],
+                 [0, 1, 0]],
+                [[1, 0, 1],
+                 [0, 1, 0],
+                 [1, 0, 0]]
+            ]),
+            1,
+            np.array([
+                [[0, 0, 0],
+                 [0, 0.5, 0],
+                 [0, 0, 0]],
+                [[0, 0, 0],
+                 [0, 1, 0],
+                 [0, 0, 0]]
+            ]),
+            np.array([
+                [[0, 1, 0],
+                 [1, 0, 1],
+                 [0, 1, 0]],
+                [[1, 0, 1],
+                 [0, 0, 0],
+                 [1, 0, 0]]
+            ])
+        )
+    ]
+)
+def test_split_into_center_and_frame(
+        part: np.ndarray, padding_size: int,
+        expected_center: np.ndarray, expected_frame: np.ndarray
+) -> None:
+    """Test `split_into_center_and_frame` function."""
+    center, frame = batches.split_into_center_and_frame(part, padding_size)
+    np.testing.assert_equal(center, expected_center)
+    np.testing.assert_equal(frame, expected_frame)
