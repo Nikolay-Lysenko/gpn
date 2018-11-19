@@ -102,3 +102,14 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Other editors
+*~
+.idea/
+.save
+
+# Binaries
+*.pkl
+
+# Logs
+nohup.out
