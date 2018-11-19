@@ -72,11 +72,31 @@ def split_into_center_and_frame(
     :param padding_size:
         size of a frame
     :return:
-        a tuple of a central piece with zero padding
-        and a frame with zeros at center,
-        both having the same size as `part`
+        a tuple of a central piece without padding
+        and a frame with zeros at center
     """
     center = part[:, padding_size:-padding_size, padding_size:-padding_size]
-    center = pad_image(center, padding_size)
-    frame = part - center
+    padded_center = pad_image(center, padding_size)
+    frame = part - padded_center
     return center, frame
+
+
+def generate_noisy_negative_example(
+        part: np.ndarray, padding_size: int
+) -> np.ndarray:
+    """
+    Generate noisy negative example from a real positive example.
+
+    :param part:
+        sampled fragment of a real image of shape (channel_dim, x_dim, y_dim)
+    :param padding_size:
+        size of a frame around center of `part`
+    :return:
+        fake fragment of an image where center is a noise and frame
+        around it is the same as in original `part`
+    """
+    center, frame = split_into_center_and_frame(part, padding_size)
+    noisy_center = np.random.uniform(size=center.shape)
+    noisy_center = pad_image(noisy_center, padding_size)
+    fake_part = noisy_center + frame
+    return fake_part

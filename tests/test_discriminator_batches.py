@@ -117,12 +117,8 @@ def test_sample_square_part(
             ]),
             1,
             np.array([
-                [[0, 0, 0],
-                 [0, 0.5, 0],
-                 [0, 0, 0]],
-                [[0, 0, 0],
-                 [0, 1, 0],
-                 [0, 0, 0]]
+                [[0.5]],
+                [[1]]
             ]),
             np.array([
                 [[0, 1, 0],
@@ -143,3 +139,31 @@ def test_split_into_center_and_frame(
     center, frame = batches.split_into_center_and_frame(part, padding_size)
     np.testing.assert_equal(center, expected_center)
     np.testing.assert_equal(frame, expected_frame)
+
+
+@pytest.mark.parametrize(
+    "part, padding_size",
+    [
+        (
+            np.array([
+                [[0, 1, 0],
+                 [1, 0.5, 1],
+                 [0, 1, 0]],
+                [[1, 0, 1],
+                 [0, 1, 0],
+                 [1, 0, 0]]
+            ]),
+            1
+        )
+    ]
+)
+def test_generate_noisy_negative_example(
+        part: np.ndarray, padding_size: int
+) -> None:
+    """Test `generate_noisy_negative_example` function."""
+    fake_part = batches.generate_noisy_negative_example(part, padding_size)
+    diff = part - fake_part
+    assert diff[:, :padding_size, :].max() == 0
+    assert diff[:, -padding_size:, :].max() == 0
+    assert diff[:, :, :padding_size].max() == 0
+    assert diff[:, :, -padding_size:].max() == 0
