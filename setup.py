@@ -26,5 +26,5 @@ setup(
     keywords='generative_models neural_networks gan',
     packages=find_packages(exclude=['tests', 'docs']),
     python_requires='>=3.6',
-    install_requires=['tensorflow', 'numpy', 'PyYAML']
+    install_requires=['tensorflow', 'numpy', 'PyYAML', 'Pillow']
 )
