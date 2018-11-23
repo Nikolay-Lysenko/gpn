@@ -100,7 +100,6 @@ def test_sample_square_part(
 ) -> None:
     """Test `sample_square_part` function."""
     output = batches.sample_square_part(image, internal_size, padding_size)
-    print(output)
     assert any([np.array_equal(output, arr) for arr in possible_outputs])
 
 
