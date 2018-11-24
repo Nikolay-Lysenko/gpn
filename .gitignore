@@ -113,3 +113,6 @@ venv.bak/
 
 # Logs
 nohup.out
+
+# Project-specific files
+models/
