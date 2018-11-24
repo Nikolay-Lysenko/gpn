@@ -1,11 +1,16 @@
 """
-Prepare batches for discriminator.
+Transform collection of original images in order to train discriminator.
+
+Discriminator is trained to solve a so called predictive learning
+problem. Namely, there is a context (frame around a fragment of
+an original image) and discriminator should guess whether center of a fragment
+is real or not.
 
 Author: Nikolay Lysenko
 """
 
 
-from typing import Tuple, Generator
+from typing import Tuple
 
 import numpy as np
 
@@ -158,66 +163,69 @@ def generate_mismatching_negative_example(
     return fake_part
 
 
-def yield_discriminator_batches(
-        images: np.ndarray, n_positives_per_batch: int,
+def generate_dataset(
+        images: np.ndarray, n_fragments_per_image: int,
         internal_size: int, frame_size: int
-) -> Generator[Tuple[np.ndarray], None, None]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Yield batches for discriminator training.
+    Transform collection of images for predictive learning setup.
 
     :param images:
         array of real images of shape (n_images, n_channels, x_dim, y_dim)
-    :param n_positives_per_batch:
-        number of positive (real) examples per batch
+    :param n_fragments_per_image:
+        number of positive (real) examples to be sampled from an image
     :param internal_size:
         size of square that must be entirely within the original image
     :param frame_size:
         size of a frame that can be outside of the original image
     :return:
-        batches of shape (4 * n_positives_per_batch, n_channels, x_dim, y_dim)
-        where for each original image there are:
-        * its fragment,
-        * the same fragment with noise at center,
-        * the same fragment wih blurred center,
-        * the same fragment with center taken from another image
+        a tuple of:
+        * dataset of shape (
+              4 * n_fragments_per_image * n_images,
+              x_dim,
+              y_dim,
+              n_channels
+          )
+          where for each fragment of original image there are:
+          * the fragment itself,
+          * the same fragment with noise at center,
+          * the same fragment wih blurred center,
+          * the same fragment with center taken from another image
+       * labels indicating whether a fragment is real or not
     """
-    size_of_incomplete_batch = images.shape[0] % n_positives_per_batch
-    if size_of_incomplete_batch > 0:
-        images = images[:-size_of_incomplete_batch, :, :, :]
-    images = images.reshape(-1, n_positives_per_batch, *images.shape[1:])
-    for i in range(images.shape[0]):
-        positive_batch = images[i]
-        features = []
-        for j in range(positive_batch.shape[0]):
-            image = positive_batch[j]
-
+    fragments = []
+    n_images = images.shape[0]
+    for i in range(n_images):
+        image = images[i]
+        for _ in range(n_fragments_per_image):
             real_part = sample_square_part(
                 image, internal_size, frame_size
             )
-            features.append(real_part.reshape(-1, *real_part.shape))
+            fragments.append(real_part.reshape(-1, *real_part.shape))
 
             noisy_part = generate_noisy_negative_example(
                 real_part, frame_size
             )
-            features.append(noisy_part.reshape(-1, *noisy_part.shape))
+            fragments.append(noisy_part.reshape(-1, *noisy_part.shape))
 
             blurry_part = generate_blurry_negative_example(
                 real_part, frame_size
             )
-            features.append(blurry_part.reshape(-1, *blurry_part.shape))
+            fragments.append(blurry_part.reshape(-1, *blurry_part.shape))
 
-            another_batch = images[(i + 1) % images.shape[0]]
-            another_image = another_batch[j]
+            another_image = images[(i + 1) % n_images]
             another_part = sample_square_part(
                 another_image, internal_size, frame_size
             )
             mismatching_part = generate_mismatching_negative_example(
                 real_part, another_part, frame_size
             )
-            features.append(
+            fragments.append(
                 mismatching_part.reshape(-1, *mismatching_part.shape)
             )
 
-        features = np.concatenate(features, axis=0)
-        labels = np.repeat(np.array([1, 0, 0, 0]), n_positives_per_batch)
-        yield features, labels
+    fragments = np.concatenate(fragments, axis=0)
+    fragments = fragments.swapaxes(1, 2).swapaxes(2, 3)  # To 'channels_last'.
+    labels_pattern = np.array([1, 0, 0, 0])
+    labels = np.repeat(labels_pattern, n_fragments_per_image * n_images)
+    return fragments, labels

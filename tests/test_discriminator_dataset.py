@@ -1,5 +1,5 @@
 """
-Test `discriminator_batches.py` module.
+Test `discriminator_dataset.py` module.
 
 Author: Nikolay Lysenko
 """
@@ -10,7 +10,7 @@ from typing import List
 import pytest
 import numpy as np
 
-from gpn import discriminator_batches as batches
+from gpn import discriminator_dataset as dd
 
 
 @pytest.mark.parametrize(
@@ -41,7 +41,7 @@ def test_pad_image(
         image: np.ndarray, padding_size: int, expected: np.ndarray
 ) -> None:
     """Test `pad_image` function."""
-    padded_image = batches.pad_image(image, padding_size)
+    padded_image = dd.pad_image(image, padding_size)
     np.testing.assert_equal(padded_image, expected)
 
 
@@ -99,7 +99,7 @@ def test_sample_square_part(
         possible_outputs: List[np.ndarray]
 ) -> None:
     """Test `sample_square_part` function."""
-    output = batches.sample_square_part(image, internal_size, padding_size)
+    output = dd.sample_square_part(image, internal_size, padding_size)
     assert any([np.array_equal(output, arr) for arr in possible_outputs])
 
 
@@ -136,7 +136,7 @@ def test_split_into_center_and_frame(
         expected_center: np.ndarray, expected_frame: np.ndarray
 ) -> None:
     """Test `split_into_center_and_frame` function."""
-    center, frame = batches.split_into_center_and_frame(part, padding_size)
+    center, frame = dd.split_into_center_and_frame(part, padding_size)
     np.testing.assert_equal(center, expected_center)
     np.testing.assert_equal(frame, expected_frame)
 
@@ -161,7 +161,7 @@ def test_generate_noisy_negative_example(
         part: np.ndarray, padding_size: int
 ) -> None:
     """Test `generate_noisy_negative_example` function."""
-    fake_part = batches.generate_noisy_negative_example(part, padding_size)
+    fake_part = dd.generate_noisy_negative_example(part, padding_size)
     assert fake_part.min() >= 0
     assert fake_part.max() <= 1
     diff = part - fake_part
@@ -191,7 +191,7 @@ def test_generate_blurry_negative_example(
         part: np.ndarray, padding_size: int
 ) -> None:
     """Test `generate_blurry_negative_example` function."""
-    fake_part = batches.generate_blurry_negative_example(part, padding_size)
+    fake_part = dd.generate_blurry_negative_example(part, padding_size)
     assert fake_part.min() >= 0
     assert fake_part.max() <= 1
     diff = part - fake_part
@@ -238,7 +238,7 @@ def test_generate_mismatching_negative_example(
         padding_size: int
 ) -> None:
     """Test `generate_mismatching_negative_example` function."""
-    fake_part = batches.generate_mismatching_negative_example(
+    fake_part = dd.generate_mismatching_negative_example(
         part, another_part, padding_size
     )
     np.testing.assert_equal(fake_part, expected)
