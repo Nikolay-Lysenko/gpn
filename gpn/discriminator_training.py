@@ -5,8 +5,9 @@ Author: Nikolay Lysenko
 """
 
 
-from typing import Tuple, Dict, Callable, Any
+import os
 from functools import partial
+from typing import Tuple, Dict, Callable, Any
 
 import numpy as np
 import tensorflow as tf
@@ -90,7 +91,8 @@ def train(settings: Dict[str, Any]) -> None:
 
     # Create estimator.
     model_fn = get_model_fn(settings)
-    model_dir = settings['discriminator']['model_dir']
+    relative_model_dir = settings['discriminator']['model_dir']
+    model_dir = os.path.join(os.path.dirname(__file__), relative_model_dir)
     discriminator = tf.estimator.Estimator(model_fn, model_dir)
 
     # Train estimator.

@@ -1,5 +1,9 @@
 """
-Define architectures of discriminators.
+Define model functions for discriminators.
+
+Such functions can take more argumetns than its supposed by
+`tf.Estimator`, so extra arguments must be filled with
+`functools.partial`.
 
 Author: Nikolay Lysenko
 """
@@ -21,9 +25,11 @@ def basic_mnist_model_fn(
     Define model function for a basic MNIST-related discriminator.
 
     Here, parameters of layers are selected for the following setup:
-    * n_fragments_per_image = 5
-    * internal_size = 3
-    * frame_size = 1
+    * n_fragments_per_image = 5,
+    * internal_size = 3,
+    * frame_size = 1.
+    If another setup is studied, another model function should be
+    defined and used.
 
     :param features:
         dictionary with a key 'data' and a tensor of shape
@@ -96,7 +102,6 @@ def basic_mnist_model_fn(
         )
         return spec
     loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
-    loss = tf.identity(loss, name='train_loss')
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = tf.train.AdamOptimizer(
             learning_rate=learning_rate,
