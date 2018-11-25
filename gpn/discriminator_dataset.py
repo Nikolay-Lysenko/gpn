@@ -227,5 +227,5 @@ def generate_dataset(
     fragments = np.concatenate(fragments, axis=0)
     fragments = fragments.swapaxes(1, 2).swapaxes(2, 3)  # To 'channels_last'.
     labels_pattern = np.array([1, 0, 0, 0])
-    labels = np.repeat(labels_pattern, n_fragments_per_image * n_images)
+    labels = np.tile(labels_pattern, n_fragments_per_image * n_images)
     return fragments, labels
