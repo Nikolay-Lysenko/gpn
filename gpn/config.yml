@@ -6,7 +6,7 @@ mnist:
       - 28
       - 28
   setup:
-    n_fragments_per_image: 5
+    n_fragments_per_image: 7
     internal_size: 3
     frame_size: 1
   discriminator:
@@ -15,5 +15,5 @@ mnist:
   discriminator_training:
     num_epochs: 10
     batch_size: 64
-    learning_rate: 0.001
+    learning_rate: 0.0001
     beta_one: 0.5

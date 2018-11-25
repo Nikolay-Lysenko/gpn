@@ -61,6 +61,8 @@ def get_model_fn(settings: Dict[str, Any]) -> Callable:
     :return:
         model function ready for usage
     """
+    # `params` argument of `tf.Estimator` is not used, because
+    # different functions may have different parameters.
     dispatcher = {
         'basic_mnist_discriminator': partial(
             d_models.basic_mnist_model_fn,

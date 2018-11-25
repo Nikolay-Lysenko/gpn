@@ -1,7 +1,7 @@
 """
 Define model functions for discriminators.
 
-Such functions can take more argumetns than its supposed by
+Such functions can take more arguments than its supposed by
 `tf.Estimator`, so extra arguments must be filled with
 `functools.partial`.
 
@@ -25,7 +25,7 @@ def basic_mnist_model_fn(
     Define model function for a basic MNIST-related discriminator.
 
     Here, parameters of layers are selected for the following setup:
-    * n_fragments_per_image = 5,
+    * n_fragments_per_image = 7,
     * internal_size = 3,
     * frame_size = 1.
     If another setup is studied, another model function should be
@@ -58,7 +58,8 @@ def basic_mnist_model_fn(
     first_pooling_layer = tf.layers.max_pooling2d(
         inputs=first_conv_layer,
         pool_size=[2, 2],
-        strides=2
+        strides=2,
+        padding='same',
     )
     second_conv_layer = tf.layers.conv2d(
         inputs=first_pooling_layer,
@@ -67,17 +68,12 @@ def basic_mnist_model_fn(
         padding='same',
         activation=tf.nn.relu
     )
-    second_pooling_layer = tf.layers.max_pooling2d(
-        inputs=second_conv_layer,
-        pool_size=[2, 2],
-        strides=2
-    )
-    flat_second_pooling_layer = tf.layers.flatten(
-        second_pooling_layer
+    flat_second_conv_layer = tf.layers.flatten(
+        second_conv_layer
     )
     dense_layer = tf.layers.dense(
-        inputs=flat_second_pooling_layer,
-        units=256,
+        inputs=flat_second_conv_layer,
+        units=128,
         activation=tf.nn.relu
     )
     dropout_layer = tf.layers.dropout(
