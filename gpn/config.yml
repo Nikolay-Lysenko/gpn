@@ -5,15 +5,27 @@ mnist:
       - 1
       - 28
       - 28
-  setup:
-    n_fragments_per_image: 7
-    internal_size: 3
-    frame_size: 1
   discriminator:
-    model_fn: basic_mnist_discriminator
-    model_dir: models/basic_mnist_discriminator
-  discriminator_training:
-    num_epochs: 10
-    batch_size: 64
-    learning_rate: 0.0001
-    beta_one: 0.5
+    network: basic_mnist_d_network
+    train_op: basic_mnist_d_train_op
+    saving_path: models/basic_mnist_discriminator.ckpt
+    setup:
+      n_fragments_per_image: 7
+      internal_size: 3
+      frame_size: 1
+    training:
+      num_epochs: 10
+      batch_size: 64
+      learning_rate: 0.0001
+      beta_one: 0.5
+  generator:
+    network: basic_mnist_g_network
+    train_op: basic_mnist_g_train_op
+    saving_path: models/basic_mnist_generator.ckpt
+    setup:
+      z_dim: 20
+    training:
+      num_epochs: 10
+      batch_size: 64
+      learning_rate: 0.0001
+      beta_one: 0.5

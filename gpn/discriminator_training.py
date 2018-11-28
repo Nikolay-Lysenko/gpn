@@ -6,13 +6,12 @@ Author: Nikolay Lysenko
 
 
 import os
-from functools import partial
-from typing import Tuple, Dict, Callable, Any
+from typing import Tuple, Dict, Callable, Generator, Any
 
 import numpy as np
 import tensorflow as tf
 
-from gpn import discriminator_models as d_models
+from gpn.graph import create_session
 from gpn.discriminator_dataset import generate_dataset
 
 
@@ -52,27 +51,31 @@ def get_dataset_loader_by_name(name: str) -> Callable:
     return dataset_downloader
 
 
-def get_model_fn(settings: Dict[str, Any]) -> Callable:
+def yield_batches(
+        data: np.ndarray, labels: np.ndarray, batch_size: int
+) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
     """
-    Get model function compatible with `tf.Estimator`.
+    Split train data into batches and iterate over them.
 
-    :param settings:
-        configuration of an experiment
-    :return:
-        model function ready for usage
+    :param data:
+        feature representation of images,
+        shape is (n_images, x_dim, y_dim, n_channels)
+    :param labels:
+        labels of objects
+    :param batch_size:
+        number of objects per batch
+    :yield:
+        batches of initial dataset
     """
-    # `params` argument of `tf.Estimator` is not used, because
-    # different functions may have different parameters.
-    dispatcher = {
-        'basic_mnist_discriminator': partial(
-            d_models.basic_mnist_model_fn,
-            learning_rate=settings['discriminator_training']['learning_rate'],
-            beta_one=settings['discriminator_training']['beta_one']
-        )
-    }
-    name = settings['discriminator']['model_fn']
-    model_fn = dispatcher[name]
-    return model_fn
+    assert data.shape[0] == labels.shape[0]
+    size_of_incomplete_batch = data.shape[0] % batch_size
+    if size_of_incomplete_batch > 0:
+        data = data[:-size_of_incomplete_batch, :, :, :]
+        labels = labels[:-size_of_incomplete_batch, :, :, :]
+    data = data.reshape(-1, batch_size, *data.shape[1:])
+    labels = labels.reshape(-1, batch_size)
+    for i in range(data.shape[0]):
+        yield data[i], labels[i]
 
 
 def train(settings: Dict[str, Any]) -> None:
@@ -87,33 +90,40 @@ def train(settings: Dict[str, Any]) -> None:
     # Prepare data.
     loader = get_dataset_loader_by_name(settings['data']['dataset_name'])
     train_images, test_images = loader()
-    setup = settings['setup']
+    setup = settings['discriminator']['setup']
     train_data, train_labels = generate_dataset(train_images, **setup)
     test_data, test_labels = generate_dataset(test_images, **setup)
 
-    # Create estimator.
-    model_fn = get_model_fn(settings)
-    relative_model_dir = settings['discriminator']['model_dir']
-    model_dir = os.path.join(os.path.dirname(__file__), relative_model_dir)
-    discriminator = tf.estimator.Estimator(model_fn, model_dir)
+    # Train discriminator.
+    d_train_settings = settings['discriminator']['training']
+    num_epochs = d_train_settings['num_epochs']
+    batch_size = d_train_settings['batch_size']
+    with create_session(settings) as sess:
+        d_input = sess.graph.get_tensor_by_name('d_input:0')
+        d_labels = sess.graph.get_tensor_by_name('d_labels:0')
+        d_train_op = sess.graph.get_operation_by_name('d_train_op')
+        d_loss = sess.graph.get_tensor_by_name('d_loss:0')
+        d_predictions = sess.graph.get_tensor_by_name('d_predictions:0')
+        sess.run(tf.global_variables_initializer())
 
-    # Train estimator.
-    train_settings = settings['discriminator_training']
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={'data': train_data},
-        y=train_labels,
-        batch_size=train_settings['batch_size'],
-        num_epochs=train_settings['num_epochs'],
-        shuffle=True
-    )
-    discriminator.train(input_fn=train_input_fn)
+        n_batches_passed = 0
+        for epoch_i in range(num_epochs):
+            batches = yield_batches(train_data, train_labels, batch_size)
+            for batch_data, batch_labels in batches:
+                n_batches_passed += 1
+                feed_dict = {d_input: batch_data, d_labels: batch_labels}
+                sess.run(d_train_op, feed_dict)
 
-    # Evaluate estimator.
-    eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={'data': test_data},
-        y=test_labels,
-        num_epochs=1,
-        shuffle=False
-    )
-    metrics = discriminator.evaluate(input_fn=eval_input_fn)
-    print(metrics)
+                if n_batches_passed % 1000 == 0:
+                    batch_loss = d_loss.eval(feed_dict, sess)
+                    print(f'Epoch {epoch_i}: loss on a batch = {batch_loss}')
+        saver = tf.train.Saver()
+        saving_path = os.path.join(
+            os.path.dirname(__file__),
+            settings['discriminator']['saving_path']
+        )
+        saver.save(sess, saving_path)
+
+        test_predictions = d_predictions.eval({d_input: test_data}, sess)
+        accuracy = (test_labels == test_predictions).mean()
+        print(f'Accuracy on hold-out test set: {accuracy}')
