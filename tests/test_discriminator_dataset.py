@@ -17,13 +17,16 @@ from gpn import discriminator_dataset as dd
     "image, padding_size, expected",
     [
         (
+            # `image`
             np.array([
                 [[0, 1, 0],
                  [1, 0, 1]],
                 [[1, 0, 1],
                  [0, 1, 0]]
             ]),
+            # `padding_size`
             1,
+            # `expected`
             np.array([
                 [[0, 0, 0, 0, 0],
                  [0, 0, 1, 0, 0],
@@ -49,14 +52,18 @@ def test_pad_image(
     "image, internal_size, padding_size, possible_outputs",
     [
         (
+            # `image`
             np.array([
                 [[0, 1],
                  [1, 0]],
                 [[1, 1],
                  [0, 0]],
             ]),
+            # `internal_size`
             1,
+            # `padding_size`
             1,
+            # `possible_outputs`
             [
                 np.array([
                     [[0, 0, 0],
@@ -107,6 +114,7 @@ def test_sample_square_part(
     "part, padding_size, expected_center, expected_frame",
     [
         (
+            # `part`
             np.array([
                 [[0, 1, 0],
                  [1, 0.5, 1],
@@ -115,11 +123,14 @@ def test_sample_square_part(
                  [0, 1, 0],
                  [1, 0, 0]]
             ]),
+            # `padding_size`
             1,
+            # `expected_center`
             np.array([
                 [[0.5]],
                 [[1]]
             ]),
+            # `expected_frame`
             np.array([
                 [[0, 1, 0],
                  [1, 0, 1],
@@ -145,6 +156,7 @@ def test_split_into_center_and_frame(
     "part, padding_size",
     [
         (
+            # `part`
             np.array([
                 [[0, 1, 0],
                  [1, 0.5, 1],
@@ -153,6 +165,7 @@ def test_split_into_center_and_frame(
                  [0, 1, 0],
                  [1, 0, 0]]
             ]),
+            # `padding_size`
             1
         )
     ]
@@ -175,6 +188,7 @@ def test_generate_noisy_negative_example(
     "part, padding_size",
     [
         (
+            # `part`
             np.array([
                 [[0, 1, 0],
                  [1, 0.5, 1],
@@ -183,6 +197,7 @@ def test_generate_noisy_negative_example(
                  [0, 1, 0],
                  [1, 0, 0]]
             ]),
+            # `padding_size`
             1
         )
     ]
@@ -205,6 +220,7 @@ def test_generate_blurry_negative_example(
     "part, another_part, padding_size, expected",
     [
         (
+            # `part`
             np.array([
                 [[0, 1, 0],
                  [1, 0.5, 1],
@@ -213,6 +229,7 @@ def test_generate_blurry_negative_example(
                  [0, 1, 0],
                  [1, 0, 0]]
             ]),
+            # `another_part`
             np.array([
                 [[1, 0, 0],
                  [1, 0.8, 1],
@@ -221,7 +238,9 @@ def test_generate_blurry_negative_example(
                  [0, 0.3, 1],
                  [1, 0, 0]]
             ]),
+            # `padding_size`
             1,
+            # `expected`
             np.array([
                 [[0, 1, 0],
                  [1, 0.8, 1],
