@@ -1,10 +1,6 @@
 """
 Define model functions for discriminators.
 
-Such functions can take more arguments than its supposed by
-`tf.Estimator`, so extra arguments must be filled with
-`functools.partial`.
-
 Author: Nikolay Lysenko
 """
 

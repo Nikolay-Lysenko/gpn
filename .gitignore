@@ -110,6 +110,7 @@ venv.bak/
 
 # Binaries
 *.pkl
+*.jpg
 
 # Logs
 nohup.out

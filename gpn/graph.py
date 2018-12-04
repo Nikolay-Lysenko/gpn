@@ -18,7 +18,8 @@ def create_graph(
         d_network_fn: Callable, g_network_fn: Callable,
         d_train_op_fn: Callable, g_train_op_fn: Callable,
         d_input_shape: Tuple[Optional[int], ...],
-        g_input_shape: Tuple[Optional[int], ...]
+        g_input_shape: Tuple[Optional[int], ...],
+        setup: Dict[str, Any]
 ) -> tf.Graph:
     """
     Create graph with discriminator and generator.
@@ -35,6 +36,8 @@ def create_graph(
         shape of discriminator input
     :param g_input_shape:
         shape of generator input
+    :param setup:
+        setup of discriminator problem
     :return:
         computation graph
     """
@@ -46,19 +49,37 @@ def create_graph(
         d_logits = d_network_fn(d_input, reuse=False)
         d_train_op = d_train_op_fn(d_logits, d_labels)
 
-        # Predicting with discriminator.
+        # Predicting with discriminator (needed for its evaluation).
         d_pred_logits = d_network_fn(d_input, reuse=True)
         d_preds = tf.argmax(input=d_pred_logits, axis=1, name='d_predictions')
 
         # Generator training.
-        g_input = tf.placeholder(tf.float32, g_input_shape)
-        # TODO: Implement.
-        # g_pictures = g_network_fn(g_input)
-        # g_padded_pictures = tf.pad(g_pictures)
-        # g_parts = ...
-        # g_neg_loss, _ = d_network_fn(g_parts, reuse=True)
-        # g_loss = tf.negative(g_neg_loss)  # TODO: Softmax?
-        # g_train_op = g_train_op_fn(g_loss)
+        # a) Images generation.
+        g_input = tf.placeholder(tf.float32, g_input_shape, name='g_input')
+        g_images = g_network_fn(g_input, reuse=False)
+        # b) Sampling fragments of images for evaluation.
+        frame_size = setup['frame_size']
+        fragment_size = setup['internal_size'] + 2 * frame_size
+        padding_size = tf.constant([
+            [0, 0],
+            [frame_size, frame_size],
+            [frame_size, frame_size],
+            [0, 0]
+        ])
+        g_padded_images = tf.pad(g_images, padding_size)
+        g_corner = tf.placeholder(tf.int32, (2,), name='g_corner')
+        g_fragments = g_padded_images[
+            :,
+            g_corner[0]:(g_corner[0] + fragment_size),
+            g_corner[1]:(g_corner[1] + fragment_size),
+            :
+        ]
+        g_fragments = tf.reshape(g_fragments, (-1, *d_input_shape[1:]))
+        # c) Training operation.
+        g_logits = d_network_fn(g_fragments, reuse=True)
+        g_loss = tf.reduce_sum(tf.sigmoid(g_logits)[:, 0])
+        g_loss = tf.identity(g_loss, name='g_loss')
+        g_train_op = g_train_op_fn(g_loss)
 
     return graph
 
@@ -97,13 +118,18 @@ def get_train_ops(settings: Dict[str, Any]) -> Tuple[Callable, Callable]:
         discriminator and generator
     """
     d_train_settings = settings['discriminator']['training']
+    g_train_settings = settings['generator']['training']
     dispatcher = {
         'basic_mnist_d_train_op': partial(
             d_models.basic_mnist_d_train_op_fn,
             learning_rate=d_train_settings['learning_rate'],
             beta_one=d_train_settings['beta_one']
         ),
-        'basic_mnist_g_train_op': g_models.basic_mnist_g_train_op_fn
+        'basic_mnist_g_train_op': partial(
+            g_models.basic_mnist_g_train_op_fn,
+            learning_rate=g_train_settings['learning_rate'],
+            beta_one=g_train_settings['beta_one']
+        )
     }
     d_train_op_fn = dispatcher[settings['discriminator']['train_op']]
     g_train_op_fn = dispatcher[settings['generator']['train_op']]
@@ -147,7 +173,8 @@ def create_session(settings: Dict[str, Any]) -> tf.Session:
     graph = create_graph(
         d_network_fn, g_network_fn,
         d_train_op_fn, g_train_op_fn,
-        d_input_shape, g_input_shape
+        d_input_shape, g_input_shape,
+        settings['discriminator']['setup']
     )
     with graph.as_default():
         session = tf.Session()

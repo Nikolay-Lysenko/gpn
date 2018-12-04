@@ -10,7 +10,7 @@ import os
 
 import yaml
 
-from gpn import discriminator_training
+from gpn import discriminator_training, generator_training
 
 
 def parse_cli_args() -> argparse.Namespace:
@@ -53,7 +53,7 @@ def main():
     if cli_args.task == 'd_train':
         discriminator_training.train(settings)
     elif cli_args.task == 'g_train':
-        pass
+        generator_training.train(settings)
     elif cli_args.task == 'g_apply':
         pass
 
