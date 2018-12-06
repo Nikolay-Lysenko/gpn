@@ -19,19 +19,25 @@ def get_mnist_data() -> Tuple[np.ndarray, np.ndarray]:
     """
     Get images from MNIST dataset.
 
+    Reverted images are also included.
+    Results have shape (n_images, n_channels, x_dim, y_dim).
+
     :return:
         train set and test set
     """
-    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
     max_intensity = 256
-    x_train = x_train.reshape(
-        x_train.shape[0], 1, x_train.shape[1], x_train.shape[2]
-    )
-    x_train = x_train / max_intensity
-    x_test = x_test.reshape(
-        x_test.shape[0], 1, x_test.shape[1], x_test.shape[2]
-    )
-    x_test = x_test / max_intensity
+
+    def process(arr: np.ndarray) -> np.ndarray:
+        # Process raw images.
+        arr = np.expand_dims(arr, axis=1)
+        arr = arr / max_intensity
+        arr = np.concatenate((arr, 1 - arr), axis=1)
+        np.random.shuffle(arr)
+        return arr
+
+    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+    x_train = process(x_train)
+    x_test = process(x_test)
     return x_train, x_test
 
 
@@ -124,6 +130,12 @@ def train(settings: Dict[str, Any]) -> None:
         )
         saver.save(sess, saving_path)
 
-        test_predictions = d_predictions.eval({d_input: test_data}, sess)
-        accuracy = (test_labels == test_predictions).mean()
+        # Iterating over batches decreases peak consumption of RAM.
+        accuracies = []
+        test_batches = yield_batches(test_data, test_labels, batch_size)
+        for batch_data, batch_labels in test_batches:
+            batch_predictions = d_predictions.eval({d_input: batch_data}, sess)
+            accuracy = (batch_labels == batch_predictions).mean()
+            accuracies.append(accuracy)
+        accuracy = sum(accuracies) / len(accuracies)
         print(f'Accuracy on hold-out test set: {accuracy}')
