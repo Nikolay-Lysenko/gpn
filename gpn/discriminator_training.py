@@ -77,7 +77,7 @@ def yield_batches(
     size_of_incomplete_batch = data.shape[0] % batch_size
     if size_of_incomplete_batch > 0:
         data = data[:-size_of_incomplete_batch, :, :, :]
-        labels = labels[:-size_of_incomplete_batch, :, :, :]
+        labels = labels[:-size_of_incomplete_batch]
     data = data.reshape(-1, batch_size, *data.shape[1:])
     labels = labels.reshape(-1, batch_size)
     for i in range(data.shape[0]):
