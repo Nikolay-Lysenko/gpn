@@ -31,7 +31,7 @@ def get_mnist_data() -> Tuple[np.ndarray, np.ndarray]:
         # Process raw images.
         arr = np.expand_dims(arr, axis=1)
         arr = arr / max_intensity
-        arr = np.concatenate((arr, 1 - arr), axis=1)
+        arr = np.concatenate((arr, 1 - arr), axis=0)
         np.random.shuffle(arr)
         return arr
 
