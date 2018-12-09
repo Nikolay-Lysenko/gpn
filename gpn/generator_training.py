@@ -11,18 +11,19 @@ from typing import Dict, Any
 import numpy as np
 import tensorflow as tf
 from PIL import Image
+from numpy.random import choice
 
 from gpn.graph import create_session
 
 
 def save_generated_image(image: np.ndarray, postfix: Any) -> None:
     """
-    Save generated image.
+    Save generated image to a JPG file.
 
     :param image:
         array of shape (x_dim, y_dim, n_channels)
     :param postfix:
-        ending of a filename to be created.
+        name ending for a file to be created
     :return:
         None
     """
@@ -49,7 +50,7 @@ def yield_batches(num_batches: int, batch_size: int, z_dim: int) -> np.ndarray:
     :param z_dim:
         dimensionality of noise
     :yield:
-        batches of initial dataset
+        batches with noise
     """
     for i in range(num_batches):
         yield np.random.normal(size=(batch_size, z_dim))
@@ -83,7 +84,10 @@ def train(settings: Dict[str, Any]) -> None:
 
         g_input = sess.graph.get_tensor_by_name('g_input:0')
         g_images = sess.graph.get_tensor_by_name('generator/images:0')
-        g_corner = sess.graph.get_tensor_by_name('g_corner:0')
+        g_corners = [
+            sess.graph.get_tensor_by_name(f'g_corner_{i}:0')
+            for i in range(g_setup['n_fragments_per_image'])
+        ]
         g_train_op = sess.graph.get_operation_by_name('g_op/g_train_op')
         g_loss = sess.graph.get_tensor_by_name('g_loss:0')
 
@@ -93,13 +97,14 @@ def train(settings: Dict[str, Any]) -> None:
             for batch_noise in batches:
                 n_batches_passed += 1
 
-                x_options = settings['data']['shape'][1] - internal_size + 1
-                x_corner = np.random.choice(x_options)
-                y_options = settings['data']['shape'][2] - internal_size + 1
-                y_corner = np.random.choice(y_options)
-                random_corner = (x_corner, y_corner)
+                n_x_options = settings['data']['shape'][1] - internal_size + 1
+                n_y_options = settings['data']['shape'][2] - internal_size + 1
+                g_corners_with_values = {
+                    g_corner: (choice(n_x_options), choice(n_y_options))
+                    for g_corner in g_corners
+                }
 
-                feed_dict = {g_input: batch_noise, g_corner: random_corner}
+                feed_dict = {g_input: batch_noise, **g_corners_with_values}
                 sess.run(g_train_op, feed_dict)
 
                 if n_batches_passed % 1000 == 0:
