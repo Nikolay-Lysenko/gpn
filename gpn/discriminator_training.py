@@ -13,6 +13,7 @@ import tensorflow as tf
 
 from gpn.graph import create_session
 from gpn.discriminator_dataset import generate_dataset
+from gpn.utils import shuffle_multiple_arrays
 
 
 def get_mnist_data() -> Tuple[np.ndarray, np.ndarray]:
@@ -74,6 +75,7 @@ def yield_batches(
         batches of initial dataset
     """
     assert data.shape[0] == labels.shape[0]
+    shuffle_multiple_arrays(data, labels)
     size_of_incomplete_batch = data.shape[0] % batch_size
     if size_of_incomplete_batch > 0:
         data = data[:-size_of_incomplete_batch, :, :, :]
