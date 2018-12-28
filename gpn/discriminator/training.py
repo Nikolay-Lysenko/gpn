@@ -12,7 +12,7 @@ import numpy as np
 import tensorflow as tf
 
 from gpn.graph import create_session
-from gpn.discriminator_dataset import generate_dataset
+from gpn.discriminator.dataset import generate_dataset
 from gpn.utils import shuffle_multiple_arrays
 
 

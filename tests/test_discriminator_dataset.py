@@ -1,5 +1,5 @@
 """
-Test `discriminator_dataset.py` module.
+Test `dataset.py` module from `discriminator` package.
 
 Author: Nikolay Lysenko
 """
@@ -10,7 +10,7 @@ from typing import List
 import pytest
 import numpy as np
 
-from gpn import discriminator_dataset as dd
+from gpn.discriminator import dataset as dd
 
 
 @pytest.mark.parametrize(

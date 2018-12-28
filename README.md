@@ -42,5 +42,9 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-To change any settings, go to `gpn/config.yml` file.
+To study any settings, go to `gpn/config.yml`.
 
+The recommended way to use the package is to execute it as a script. To see valid options, run:
+```
+python -m gpn -h
+```

@@ -11,7 +11,8 @@ from typing import List, Tuple, Dict, Callable, Any, Optional
 
 import tensorflow as tf
 
-from gpn import discriminator_models as d_models, generator_models as g_models
+from gpn.discriminator import models as d_models
+from gpn.generator import models as g_models
 
 
 def sample_multiple_fragments(
