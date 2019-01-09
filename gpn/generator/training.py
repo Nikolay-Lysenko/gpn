@@ -54,7 +54,7 @@ def train(settings: Dict[str, Any]) -> None:
     with create_session(settings) as sess:
         saver = tf.train.Saver()
         checkpoint_path = os.path.join(
-            os.path.dirname(__file__),
+            os.path.dirname(__file__), '..',
             settings['discriminator']['saving_path']
         )
         saver.restore(sess, checkpoint_path)
@@ -91,7 +91,7 @@ def train(settings: Dict[str, Any]) -> None:
                     save_generated_image(image, n_batches_passed)
 
         saving_path = os.path.join(
-            os.path.dirname(__file__),
+            os.path.dirname(__file__), '..',
             settings['generator']['saving_path']
         )
         saver.save(sess, saving_path)

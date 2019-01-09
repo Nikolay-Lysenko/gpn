@@ -127,7 +127,7 @@ def train(settings: Dict[str, Any]) -> None:
                     print(f'Epoch {epoch_i}: loss on a batch = {batch_loss}')
         saver = tf.train.Saver()
         saving_path = os.path.join(
-            os.path.dirname(__file__),
+            os.path.dirname(__file__), '..',
             settings['discriminator']['saving_path']
         )
         saver.save(sess, saving_path)
