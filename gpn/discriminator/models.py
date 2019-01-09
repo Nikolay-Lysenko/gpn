@@ -14,7 +14,7 @@ def basic_mnist_d_network_fn(d_input: tf.Tensor, reuse: bool) -> tf.Tensor:
 
     Here, parameters of layers are selected for the following setup:
     * n_fragments_per_image = 7,
-    * internal_size = 3,
+    * internal_size = 2,
     * frame_size = 1.
     If another setup is studied, another function should be
     defined and used.
@@ -28,32 +28,24 @@ def basic_mnist_d_network_fn(d_input: tf.Tensor, reuse: bool) -> tf.Tensor:
         logits that are calculated by discriminator
     """
     with tf.variable_scope('discriminator', reuse=reuse):
-        first_conv_layer = tf.layers.conv2d(
+        conv_layer = tf.layers.conv2d(
             inputs=d_input,
             filters=16,
             kernel_size=[3, 3],
             padding='same',
             activation=tf.nn.relu
         )
-        first_pooling_layer = tf.layers.max_pooling2d(
-            inputs=first_conv_layer,
+        pooling_layer = tf.layers.max_pooling2d(
+            inputs=conv_layer,
             pool_size=[2, 2],
-            strides=2,
-            padding='same',
+            strides=2
         )
-        second_conv_layer = tf.layers.conv2d(
-            inputs=first_pooling_layer,
-            filters=32,
-            kernel_size=[3, 3],
-            padding='same',
-            activation=tf.nn.relu
-        )
-        flat_second_conv_layer = tf.layers.flatten(
-            second_conv_layer
+        flat_layer = tf.layers.flatten(
+            pooling_layer
         )
         dense_layer = tf.layers.dense(
-            inputs=flat_second_conv_layer,
-            units=128,
+            inputs=flat_layer,
+            units=64,
             activation=tf.nn.relu
         )
         dropout_layer = tf.layers.dropout(

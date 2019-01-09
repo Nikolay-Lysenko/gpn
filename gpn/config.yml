@@ -10,7 +10,7 @@ mnist:
     train_op: basic_mnist_d_train_op
     saving_path: models/basic_mnist_discriminator.ckpt
     setup:
-      internal_size: 3
+      internal_size: 2
       frame_size: 1
       n_fragments_per_image: 7
     training:
