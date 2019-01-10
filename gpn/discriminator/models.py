@@ -28,20 +28,20 @@ def basic_mnist_d_network_fn(d_input: tf.Tensor, reuse: bool) -> tf.Tensor:
         logits that are calculated by discriminator
     """
     with tf.variable_scope('discriminator', reuse=reuse):
-        conv_layer = tf.layers.conv2d(
+        first_conv_layer = tf.layers.conv2d(
             inputs=d_input,
             filters=16,
-            kernel_size=[3, 3],
-            padding='same',
+            kernel_size=[2, 2],
             activation=tf.nn.relu
         )
-        pooling_layer = tf.layers.max_pooling2d(
-            inputs=conv_layer,
-            pool_size=[2, 2],
-            strides=2
+        second_conv_layer = tf.layers.conv2d(
+            inputs=first_conv_layer,
+            filters=32,
+            kernel_size=[2, 2],
+            activation=tf.nn.relu
         )
         flat_layer = tf.layers.flatten(
-            pooling_layer
+            second_conv_layer
         )
         dense_layer = tf.layers.dense(
             inputs=flat_layer,
